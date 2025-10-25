@@ -258,7 +258,35 @@ func run(r io.Reader, w io.Writer) error {
 }
 
 func main() {
+	if len(os.Args) > 1 {
+		formatFile(os.Args[1])
+		return
+	}
 	if err := run(os.Stdin, os.Stdout); err != nil {
+		log.Fatalln(err)
+	}
+}
+
+// formatFile applies the formatting on the contents of a file
+// and writes the output back into the same file
+func formatFile(filename string) {
+	f, err := os.Open(filename)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer f.Close()
+
+	w, err := os.CreateTemp("", filename)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer os.Remove(w.Name())
+
+	if err := run(bufio.NewReader(f), bufio.NewWriter(w)); err != nil {
+		log.Fatalln(err)
+	}
+
+	if _, err := io.Copy(w, f); err != nil {
 		log.Fatalln(err)
 	}
 }
